@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HTML Arcade</title>
+<style>
+:root{color-scheme:dark;--bg:#090d18;--panel:#111a2b;--muted:#9ba9c2;--line:#25334b;--accent:#8b7cff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 20% 0%,#20254b 0,transparent 42%),var(--bg);color:#f4f6ff;font:15px Inter,system-ui,sans-serif}
+header{padding:38px max(22px,calc((100% - 1180px)/2));border-bottom:1px solid var(--line);background:#090d18cc}
+h1{margin:0;font-size:34px;letter-spacing:-1px}header p{color:var(--muted);margin:8px 0 0}
+main{max-width:1180px;margin:28px auto;padding:0 22px}.top{display:flex;justify-content:space-between;gap:18px;align-items:center;flex-wrap:wrap}
+h2{font-size:20px}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-top:18px}
+.card,.panel{background:linear-gradient(145deg,#151f33,#0f1727);border:1px solid var(--line);border-radius:17px;overflow:hidden}
+.cover{height:135px;background:linear-gradient(135deg,#29234c,#163b4a);display:grid;place-items:center;color:#c9c4ff;font-size:38px}
+.cover img{width:100%;height:100%;object-fit:cover}.info{padding:14px}.info h3{margin:0 0 12px;font-size:16px}
+button{border:0;border-radius:10px;background:var(--accent);color:white;font-weight:700;padding:10px 15px;cursor:pointer}
+button:hover{filter:brightness(1.12)}.secondary{background:#26334c}.panel{padding:20px;margin-top:30px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}label{display:grid;gap:7px;color:#cbd5e8;font-size:13px}
+input{width:100%;background:#0b1220;color:white;border:1px solid #34425b;border-radius:9px;padding:11px}
+.full{grid-column:1/-1}.hint,.status{color:var(--muted);font-size:13px}.status{margin-top:12px;min-height:20px}
+.empty{color:var(--muted);padding:25px;border:1px dashed var(--line);border-radius:14px}
+@media(max-width:600px){form{grid-template-columns:1fr}.full{grid-column:auto}}
+</style></head>
+<body>
+<header><h1>HTML Arcade</h1><p>Your personal library for HTML games, demos, and interactive projects.</p></header>
+<main>
+<div class="top"><div><h2>Library</h2><div class="hint">Uploaded projects are stored in your GitHub repository.</div></div><button class="secondary" onclick="loadGames()">Refresh library</button></div>
+<div id="games" class="grid"><div class="empty">Loading your library…</div></div>
+<section class="panel">
+<h2>Upload a project</h2>
+<p class="hint">Upload an HTML file and an optional cover image. Your upload password is required.</p>
+<form id="uploadForm">
+<label>Project title<input name="title" maxlength="80" placeholder="My HTML game"></label>
+<label>Upload password<input name="password" type="password" required></label>
+<label>HTML file (.html / .htm)<input name="html" type="file" accept=".html,.htm,text/html" required></label>
+<label>Cover picture (optional)<input name="image" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+<div class="full"><button type="submit">Upload to GitHub</button><div id="status" class="status"></div></div>
+</form>
+</section>
+</main>
+<script>
+const gamesEl=document.getElementById('games');
+async function loadGames(){
+  gamesEl.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const r=await fetch('/api/games'); const data=await r.json();
+    if(!r.ok) throw new Error(data.error||'Could not load library');
+    if(!data.length){gamesEl.innerHTML='<div class="empty">No projects yet. Upload your first HTML file below.</div>';return;}
+    gamesEl.innerHTML=data.map(g=>`<article class="card"><div class="cover">${g.cover?`<img src="${g.cover}" alt="">`:'⌘'}</div><div class="info"><h3>${escapeHtml(g.title)}</h3><button onclick="location.href='/play/${encodeURIComponent(g.id)}'">Play project</button></div></article>`).join('');
+  }catch(e){gamesEl.innerHTML=`<div class="empty">${escapeHtml(e.message)}</div>`}
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+document.getElementById('uploadForm').addEventListener('submit',async e=>{
+  e.preventDefault(); const status=document.getElementById('status'); const btn=e.target.querySelector('button');
+  btn.disabled=true; status.textContent='Uploading files to GitHub…';
+  try{
+    const r=await fetch('/api/upload',{method:'POST',body:new FormData(e.target)});
+    const data=await r.json(); if(!r.ok) throw new Error(data.error||'Upload failed');
+    status.textContent='Upload complete! Your project is in the library.';
+    e.target.reset(); await loadGames();
+  }catch(err){status.textContent=err.message;}
+  finally{btn.disabled=false;}
+});
+loadGames();
+</script>
+</body></html>

@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{ title|e }} · HTML Arcade</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#090d18;color:#f4f6ff;font:14px system-ui}
+header{height:58px;display:flex;align-items:center;gap:16px;padding:0 18px;border-bottom:1px solid #25334b}
+a{color:#c5bcff;text-decoration:none}strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+main{height:calc(100vh - 58px);padding:12px}iframe{width:100%;height:100%;border:1px solid #25334b;border-radius:12px;background:white}
+</style></head><body>
+<header><a href="/">← Library</a><strong>{{ title|e }}</strong></header>
+<main><iframe src="/content/{{ game_id|urlencode }}" title="{{ title|e }}" sandbox="allow-scripts allow-forms allow-pointer-lock"></iframe></main>
+</body></html>
